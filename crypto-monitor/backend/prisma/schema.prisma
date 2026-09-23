@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Application state only. Exchange ticker/candle data must not be persisted.
+model ApplicationSetting {
+  key       String   @id
+  value     Json
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("application_settings")
+}
+
+enum AlertCondition {
+  ABOVE
+  BELOW
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+model Watchlist {
+  id        String   @id @default(uuid())
+  market    String   @unique
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  @@map("watchlists")
+}
+
+model PriceAlert {
+  id              String         @id @default(uuid())
+  market          String
+  condition       AlertCondition
+  targetPrice     Decimal        @map("target_price") @db.Decimal(30, 10)
+  enabled         Boolean        @default(true)
+  triggerOnce     Boolean        @default(true) @map("trigger_once")
+  cooldownMinutes Int            @default(60) @map("cooldown_minutes")
+  lastTriggeredAt DateTime?      @map("last_triggered_at") @db.Timestamptz(3)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+  logs            PriceAlertLog[]
+  @@index([market, enabled])
+  @@map("price_alerts")
+}
+
+model PriceAlertLog {
+  id                 String             @id @default(uuid())
+  alertId            String?            @map("alert_id")
+  alert              PriceAlert?        @relation(fields: [alertId], references: [id], onDelete: SetNull)
+  market             String
+  targetPrice        Decimal            @map("target_price") @db.Decimal(30, 10)
+  triggerPrice       Decimal            @map("trigger_price") @db.Decimal(30, 10)
+  condition          AlertCondition
+  triggeredAt        DateTime           @default(now()) @map("triggered_at") @db.Timestamptz(3)
+  notificationStatus NotificationStatus @default(PENDING) @map("notification_status")
+  @@index([alertId])
+  @@index([triggeredAt])
+  @@map("price_alert_logs")
+}
