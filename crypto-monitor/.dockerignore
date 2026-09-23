@@ -1,0 +1,14 @@
+.env
+.env.*
+**/.env
+**/.env.*
+**/node_modules
+**/dist
+**/coverage
+**/test-results
+**/playwright-report
+**/test
+**/tests
+.git
+**/*.log
+**/.DS_Store
