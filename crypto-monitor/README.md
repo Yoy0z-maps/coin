@@ -1,6 +1,6 @@
-# Bithumb Crypto Monitor — Phase 5 + Frontend
+# Bithumb Crypto Monitor — Phase 8 + Frontend
 
-개인 Mac에서 운영하는 모니터링 앱입니다. **현재 구현 범위는 Phase 1–5와 React 프론트엔드입니다.** 시장·차트·포트폴리오 조회, 관심 종목/알림 조건 관리, 실시간 WebSocket 구독을 제공합니다. 가격 도달 판단·Discord 발송은 Phase 6에 구현합니다. 주문·출금 기능은 없습니다.
+개인 Mac에서 운영하는 모니터링 앱입니다. AI 요약 설정과 사용법은 [Phase 8 안내](./PHASE8.md)를 참고하세요. **현재 구현 범위는 Phase 1–8과 React 프론트엔드입니다.** 시장·차트·포트폴리오 조회, 관심 종목/알림 조건 관리, 실시간 WebSocket 구독을 제공합니다. 가격 도달 판단·중복 방지·Discord 발송과 기술적 지표를 제공합니다. [Phase 7 안내](./PHASE7.md)를 참고하세요. [Phase 6 안내](./PHASE6.md)를 참고하세요. 주문·출금 기능은 없습니다.
 
 화면은 **http://127.0.0.1:3000** 에서 엽니다. `frontend/index.html`을 파일로 직접 열지 마세요. 로그인에는 `.env`의 `PORTFOLIO_API_TOKEN`을 사용합니다. [Phase 4–5 실행·검증 안내](./PHASE4-5.md)를 참고하세요.
 
@@ -145,6 +145,6 @@ curl -i http://127.0.0.1:3000/health
 
 Phase 2는 BithumbModule, BithumbRestClient, MarketModule/Service, 시장 이름 정규화, ticker·candle 조회를 구현했습니다. 외부 API 호출은 BithumbModule에 한정하며 DB에 시세를 복제하지 않습니다.
 
-Phase 5 WebSocket과 프론트까지 구현했으며, 이후 Phase 6 알림 엔진 → Phase 7 지표 → Phase 8 AI → Phase 9 n8n 순서입니다. Phase별 사용자 지시 후 진행합니다.
+Phase 6 Discord 알림까지 구현했으며, 이후 Phase 7 지표 → Phase 8 AI → Phase 9 n8n 순서입니다. Phase별 사용자 지시 후 진행합니다.
 
 참고: [NestJS 배포 및 health 안내](https://docs.nestjs.com/deployment), [Prisma Docker 가이드](https://docs.prisma.io/docs/guides/deployment/docker). 버전별 Prisma 명령 차이가 있으므로 이 프로젝트의 고정 버전 및 npm scripts를 기준으로 실행합니다.
