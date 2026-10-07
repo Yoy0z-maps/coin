@@ -8,6 +8,7 @@ test('public dashboard is responsive and charts load',async({page})=>{
   await expect(page.getByRole('heading',{name:'시장을 한눈에.'})).toBeVisible();
   await expect(page.locator('.chart-empty')).toHaveCount(0,{timeout:60000});
   await expect(page.locator('.inline-error')).toHaveCount(0);
+  await expect(page.getByRole('region',{name:'기술적 지표'}).getByText('SMA 20',{exact:true})).toBeVisible({timeout:60000});
   await page.screenshot({path:'test-results/dashboard-desktop.png',fullPage:true});
   await page.setViewportSize({width:390,height:844});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
@@ -33,7 +34,7 @@ test('session, watchlist, alerts, realtime and private portfolio UI',async({page
     await page.getByLabel('시장',{exact:true}).fill(market!);await page.getByLabel('목표 가격').fill('1');
     const added=page.waitForResponse(r=>r.url().endsWith('/alerts')&&r.request().method()==='POST');
     await page.getByRole('button',{name:'조건 저장'}).click();alertId=(await (await added).json()).id;
-    const row=page.locator('tbody tr').filter({hasText:market});await expect(row).toBeVisible();
+    const row=page.locator('table').first().locator('tbody tr').filter({hasText:market});await expect(row).toBeVisible();
     await row.getByRole('button',{name:'수정'}).click();await page.getByLabel('목표 가격').fill('2');await page.getByRole('button',{name:'조건 저장'}).click();
     await expect(row.getByText('₩2',{exact:true})).toBeVisible();await row.getByRole('button',{name:'사용 중'}).click();await expect(row.getByRole('button',{name:'정지'})).toBeVisible();
     await page.getByRole('button',{name:'포트폴리오',exact:true}).click();await expect(page.getByText('확인 가능한 평가액')).toBeVisible();await expect(page.getByText('평가 가능한 시장 없음')).toBeVisible();
@@ -42,4 +43,20 @@ test('session, watchlist, alerts, realtime and private portfolio UI',async({page
   }finally{
     if(alertId)await request.delete('/alerts/'+alertId,{headers});if(watchId)await request.delete('/watchlist/'+watchId,{headers});
   }
+});
+
+test('AI setup state, explicit generation, output and failure UI',async({page})=>{
+  await page.route('**/session',route=>route.fulfill({json:{authenticated:true}}));
+  await page.route('**/watchlist',route=>route.fulfill({json:[]}));
+  await page.route('**/alerts',route=>route.fulfill({json:[]}));
+  await page.route('**/alerts/logs',route=>route.fulfill({json:[]}));
+  await page.route('**/realtime/stream',route=>route.abort());
+  let configured=false,calls=0;
+  await page.route('**/agent/status',route=>route.fulfill({json:{configured}}));
+  await page.route('**/agent/market/*',route=>{calls++;return calls===1?route.fulfill({json:{summary:'관측 데이터\nRSI14는 50입니다.\n해석\n중립 구간입니다.\n데이터 한계\n뉴스 정보가 없습니다.',generatedAt:new Date().toISOString(),context:{warnings:[],markets:[{market:'KRW-BTC'}]}}}):route.fulfill({status:502,json:{message:'unavailable'}});});
+  await page.goto('/');const panel=page.getByRole('region',{name:'AI 요약'});
+  await expect(panel.getByText(/AI 설정 필요/)).toBeVisible();await expect(panel.getByRole('button',{name:'KRW-BTC 시장 요약'})).toBeDisabled();expect(calls).toBe(0);
+  configured=true;await page.reload();await expect(panel.getByRole('button',{name:'KRW-BTC 시장 요약'})).toBeEnabled();expect(calls).toBe(0);
+  await panel.getByRole('button',{name:'KRW-BTC 시장 요약'}).click();await expect(panel.getByText(/RSI14는 50입니다/)).toBeVisible();
+  await panel.getByRole('button',{name:'KRW-BTC 시장 요약'}).click();await expect(panel.getByRole('alert')).toContainText('AI 응답을 받지 못했습니다');
 });

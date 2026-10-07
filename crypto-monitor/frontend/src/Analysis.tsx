@@ -1,0 +1,12 @@
+import {useEffect,useState} from 'react';
+import {number,time} from './Chart';
+interface AnalysisData {candleCount:number;asOf:string|null;gapCount:number;indicators:{sma20:number|null;sma60:number|null;ema20:number|null;ema60:number|null;rsi14:number|null;macd:{macd:number|null;signal:number|null;histogram:number|null}};volume:{current:number|null;average20:number|null;change:number|null}}
+export function Analysis({market,timeframe,refresh}:{market:string;timeframe:string;refresh:number}){
+ const [data,setData]=useState<AnalysisData|null>(null),[error,setError]=useState('');
+ useEffect(()=>{let active=true;const controller=new AbortController();setData(null);setError('');
+ const timer=setTimeout(()=>controller.abort(),60000);
+ void fetch(`/market/${market}/analysis?timeframe=${timeframe}`,{signal:controller.signal}).then(async r=>{if(!r.ok)throw Error();return r.json();}).then(d=>{if(!controller.signal.aborted)setData(d);}).catch(()=>{if(!active)return;if(!controller.signal.aborted)setError('지표를 가져오지 못했습니다. 차트의 새로고침으로 다시 시도하세요.');else setError('지표 조회가 지연되었습니다. 다시 시도하세요.');}).finally(()=>clearTimeout(timer));
+ return()=>{active=false;clearTimeout(timer);controller.abort();};},[market,timeframe,refresh]);
+ const value=(v:number|null|undefined,digits=2)=>v==null?'데이터 부족':number(v,digits);
+ return <section className="panel" aria-label="기술적 지표"><div className="panel-header"><div><h2>기술적 지표 <span className="exchange-pill">{timeframe}</span></h2><p>마감된 봉 기준 · 조회 시 갱신</p></div><small>{data?.asOf?`${time(data.asOf)} KST 봉`:'분석 데이터 조회'}</small></div>{error?<div className="inline-error">{error}</div>:!data?<div className="empty-state">지표 계산 중…</div>:<><div className="indicator-grid">{[['SMA 20',data.indicators.sma20],['SMA 60',data.indicators.sma60],['EMA 20',data.indicators.ema20],['EMA 60',data.indicators.ema60],['RSI 14',data.indicators.rsi14],['MACD (12, 26)',data.indicators.macd.macd],['Signal (9)',data.indicators.macd.signal],['Histogram',data.indicators.macd.histogram]].map(([label,v])=><div key={String(label)}><span>{label}</span><strong>{value(v as number|null,market.startsWith('BTC-')?8:2)}</strong></div>)}</div><div className="notice">마지막 마감 봉 거래량 {value(data.volume.current)} · 이전 20봉 평균 {value(data.volume.average20)} · 변화율 {data.volume.change==null?'계산 불가':`${number(data.volume.change,2)}%`}<br/>마감 봉 {data.candleCount}개 사용. {data.gapCount>0?`시간 간격이 비어 있는 구간 ${data.gapCount}개가 있으며 관측된 봉 기준으로 계산합니다.`:'EMA는 조회 구간의 초기값에 따라 다른 차트와 차이가 날 수 있습니다.'}</div></>}</section>;
+}
