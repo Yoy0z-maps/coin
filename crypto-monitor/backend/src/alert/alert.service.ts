@@ -19,7 +19,7 @@ export class AlertService {
     let row;
     try { row = await this.db.priceAlert.create({ data: { ...input, market: input.market!, condition: input.condition!, targetPrice: input.targetPrice! } }); } catch (e) { return dbError(e); }
     await this.cache.refresh().catch(() => undefined);
-    this.logger.log('Alert created; notification engine is not enabled in Phase 5');
+    this.logger.log('Alert created');
     return row;
   }
   async update(key: string, value: unknown) {
@@ -27,7 +27,7 @@ export class AlertService {
     const input = alertInput(value, true);
     if (input.market) await this.validateMarket(input.market);
     let row;
-    try { row = await this.db.priceAlert.update({ where: { id: recordId }, data: input }); } catch (e) { return dbError(e); }
+    try { row = await this.db.priceAlert.update({ where: { id: recordId }, data: { ...input, ...(input.enabled === true ? { lastTriggeredAt: null } : {}) } }); } catch (e) { return dbError(e); }
     await this.cache.refresh().catch(() => undefined);
     return row;
   }

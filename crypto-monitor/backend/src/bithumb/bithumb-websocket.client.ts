@@ -59,7 +59,7 @@ export class BithumbWebSocketClient implements OnModuleInit, OnModuleDestroy {
     return { status: this.status, subscriptions: [...this.cache.markets], cacheHealthy: this.cache.healthy,
       lastMessageAt: this.lastMessageAt, receivedCount: this.receivedCount, reconnectCount: this.reconnectCount,
       activeAlertCount: [...this.cache.alerts.values()].reduce((count, rows) => count + rows.length, 0),
-      notificationEngineEnabled: false, tickers: [...this.latest.values()] };
+      notificationEngineEnabled: Boolean(process.env.DISCORD_WEBHOOK_URL), tickers: [...this.latest.values()] };
   }
   private configurationChanged() {
     const signature = this.cache.markets.join(',');

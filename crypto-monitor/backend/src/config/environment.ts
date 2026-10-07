@@ -1,4 +1,7 @@
 export interface Environment {
+  googleAiStudioApiKey: string;
+  geminiModel: string;
+  discordWebhookUrl: string;
   databaseUrl: string;
   port: number;
   nodeEnv: string;
@@ -42,10 +45,10 @@ export function validateEnvironment(env: NodeJS.ProcessEnv): Environment {
   if (env.DISCORD_WEBHOOK_URL) {
     try {
       const url = new URL(env.DISCORD_WEBHOOK_URL);
-      if (url.protocol !== 'https:' || url.hostname !== 'discord.com' ||
+      if (url.protocol !== 'https:' || url.hostname !== 'discord.com' || url.username || url.password || url.port || url.search || url.hash ||
           !/^\/api\/webhooks\/\d+\/[^/]+$/.test(url.pathname)) invalid.add('DISCORD_WEBHOOK_URL');
     } catch { invalid.add('DISCORD_WEBHOOK_URL'); }
   }
   if (invalid.size) throw new Error(`Invalid environment variables: ${[...invalid].join(', ')}`);
-  return { databaseUrl, port, nodeEnv, timezone, bithumbAccessKey, bithumbSecretKey, portfolioApiToken };
+  return { googleAiStudioApiKey: (env.GOOGLE_AI_STUDIO_API_KEY || "").trim(), geminiModel: (env.GEMINI_MODEL || "gemini-2.5-flash").trim(), discordWebhookUrl: (env.DISCORD_WEBHOOK_URL || "").trim(), databaseUrl, port, nodeEnv, timezone, bithumbAccessKey, bithumbSecretKey, portfolioApiToken };
 }
