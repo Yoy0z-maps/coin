@@ -4,6 +4,9 @@ import { MarketService } from './market.service';
 @Controller()
 export class MarketController {
   constructor(private readonly market: MarketService) {}
+  @Get('market/:market/analysis')
+  getAnalysis(@Param('market') market: string, @Query('timeframe') timeframe?: unknown) { return this.market.getAnalysis(market,timeframe); }
+
   @Get('markets')
   getMarkets() { return this.market.getMarkets(); }
 
